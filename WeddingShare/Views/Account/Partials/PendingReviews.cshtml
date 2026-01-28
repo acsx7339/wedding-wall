@@ -1,0 +1,81 @@
+@model List<PhotoGallery>
+@using WeddingShare.Constants
+@using WeddingShare.Models.Database
+@using WeddingShare.Views.Account.Partials
+
+@{
+    var userPermissions = User?.Identity?.GetUserPermissions() ?? new Permissions();
+    var identityEnabled = await _settings.GetOrDefault(Settings.IdentityCheck.Enabled, true);
+    var requireEmailEnabled = identityEnabled ? await _settings.GetOrDefault(Settings.IdentityCheck.RequireEmail, false) : false;
+}
+
+<div class="row">
+    @if (userPermissions.Review.HasFlag(ReviewPermissions.View) && Model != null && Model.Any())
+    {
+        var index = 0;
+        foreach (var gallery in Model)
+        {
+            if (gallery.Images != null)
+            {
+                foreach (var review in gallery.Images)
+                {
+                    if (review != null)
+                    {
+                        <div class="pending-approval col-12 col-lg-4 mb-4 mb-lg-0 mb-1 mb-lg-4">
+                            <div class="card">
+                                <a href="@review.ImagePath" class="media-viewer-item" data-media-viewer-id="@review.Id" data-media-viewer-index="@index" data-media-viewer-collection="pending_reviews" data-media-viewer-type="pending_review">
+                                    <img src="@review.ThumbnailPath" class="review-tile" loading="lazy" />
+                                    @if (review?.MediaType == MediaType.Video)
+                                    {
+                                        <img src="/images/play-button.svg" class="media-viewer-play" loading="lazy" />
+                                    }
+                                    @if (userPermissions.Review.HasFlag(ReviewPermissions.Approve))
+                                    {
+                                        <i class="fa fa-thumbs-up btnReviewApprove d-lg-none" data-id="@review?.Id" data-name="@review?.Name"></i>
+                                    }
+                                    @if (userPermissions.Review.HasFlag(ReviewPermissions.Reject))
+                                    {
+                                        <i class="fa fa-thumbs-down btnReviewReject d-lg-none" data-id="@review?.Id" data-name="@review?.Name"></i>
+                                    }
+                                </a>
+                                <div class="card-header my-0 py-0">
+                                    <div class="row card-title text-capitalize border-top py-0 pt-2">
+                                        @if (identityEnabled)
+                                        {
+                                            <div class="col-12 col-lg-6 text-lg-center">
+                                                <b>@_localizer["Gallery"].Value:</b> @gallery.Gallery.Name
+                                            </div>
+                                            <div class="col-12 col-lg-6 text-lg-center">
+                                                <b>@_localizer["Uploader"].Value:</b> @(!string.IsNullOrWhiteSpace(review?.UploadedBy) ? review.UploadedBy : "Anonymous")
+                                            </div>
+                                            @if (requireEmailEnabled)
+                                            {
+                                                <div class="col-12 text-lg-center mt-lg-1">
+                                                    <b>@_localizer["EmailAddress"].Value:</b> <span class="text-lowercase">@(!string.IsNullOrWhiteSpace(review?.UploaderEmailAddress) ? review.UploaderEmailAddress : "Anonymous")</span>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="col-12">
+                                                <b>@_localizer["Gallery"].Value:</b> @gallery.Gallery.Name
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        index++;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        <div class="col-12 text-center border rounded py-5">
+            <h3 class="display-6">@_localizer["No_Pending_Uploads"].Value</h3>
+        </div>
+    }
+</div>

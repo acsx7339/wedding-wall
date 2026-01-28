@@ -1,0 +1,167 @@
+﻿@model WeddingShare.Models.PhotoGallery
+
+@using WeddingShare.Constants
+@using WeddingShare.Views.Gallery.Modes
+
+@{
+    var slideshowInterval = TimeSpan.FromSeconds(await _settings.GetOrDefault(Settings.Slideshow.Interval, 10)).TotalMilliseconds;
+    var slideshowFade = await _settings.GetOrDefault(Settings.Slideshow.Fade, 500);
+    var slideLimit = await _settings.GetOrDefault(Settings.Slideshow.Limit, int.MaxValue);
+    var identityEnabled = await _settings.GetOrDefault(Settings.IdentityCheck.Enabled, true);
+
+    if (Model?.Images != null)
+    {
+        <div class="slideshow col-12">
+            @foreach (var image in Model.Images.Take(slideLimit))
+            {
+                <div class="slideshow-slide">
+                    <img src="@image.ImagePath" class="slideshow-slide-img shadow-1-strong" loading="lazy" />
+                    @if (identityEnabled)
+                    {
+                        <h6 class="credits">@_localizer["Uploaded_By"].Value: @(!string.IsNullOrWhiteSpace(image?.UploadedBy) ? image.UploadedBy : "Anonymous")</h6>
+                    }
+                </div>
+            }
+
+            @if (await _settings.GetOrDefault(Settings.Slideshow.IncludeShareSlide, true))
+            {
+                <div class="slideshow-slide">
+                    <span class="slideshow-slide-img share-slide"></span>
+                    <h6 class="credits">@_localizer["Scan_To_Share"].Value</h6>
+                </div>
+            }
+        </div>
+    }
+}
+
+@if (Model?.LoadScripts ?? true)
+{
+    <div id="danmaku-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 9999;"></div>
+
+    <style>
+        .danmaku-item {
+            position: absolute;
+            white-space: nowrap;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black;
+            opacity: 0.9;
+            animation: danmaku-move 10s linear forwards;
+            left: 100%;
+        }
+
+        @keyframes danmaku-move {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(-120vw);
+            }
+        }
+    </style>
+
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () { 
+            $(function () {
+
+                // Danmaku Logic
+                if (!window.danmakuConnection) {
+                    window.danmakuConnection = new signalR.HubConnectionBuilder()
+                        .withUrl("/danmakuHub")
+                        .withAutomaticReconnect()
+                        .build();
+
+                    window.danmakuConnection.on("ReceiveMessage", function (message) {
+                        var container = $('#danmaku-container');
+                        if (container.length === 0) return;
+
+                        var item = $('<div class="danmaku-item"></div>').text(message);
+                        
+                        // Randomize top position (10% to 80% to avoid covering too much)
+                        var topPercent = Math.floor(Math.random() * 70) + 10; 
+                        item.css('top', topPercent + '%');
+                        
+                        // Randomize speed slightly
+                        var duration = 8 + Math.random() * 5; 
+                        item.css('animation-duration', duration + 's');
+
+                        container.append(item);
+
+                        // Remove after animation
+                        setTimeout(function() {
+                            item.remove();
+                        }, duration * 1000 + 500);
+                    });
+
+                    window.danmakuConnection.start().then(function () {
+                        console.log("Danmaku Connected");
+                        window.danmakuConnection.invoke("JoinGroup", "@Model?.Gallery?.Id");
+                    }).catch(function (err) {
+                        return console.error(err.toString());
+                    });
+                } else if (window.danmakuConnection.state === signalR.HubConnectionState.Connected) {
+                     window.danmakuConnection.invoke("JoinGroup", "@Model?.Gallery?.Id");
+                }
+
+
+                var slidetimer = null;
+                var transitionTimer = null;
+                var resizeTimeout = null;
+
+                $(window).on('resize', function () {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(function () {
+                        init();
+                    }, 200);
+                });
+
+                function init() {
+                    var windowHeight = $(window).outerHeight();
+                    var headerHeight = $('.navbar').outerHeight();
+                    var footerHeight = $('footer').outerHeight();
+                    var creditsHeight = $('.credits').length > 0 ? 20 : 0;
+                    var reviewCounterHeight = $('.review-counter').length > 0 ? $('.review-counter').outerHeight() + 70 : 50;
+                    var slideHeight = windowHeight - (headerHeight + footerHeight + reviewCounterHeight + creditsHeight);
+
+                    $('.slideshow .slideshow-slide .share-slide').qrcode({ width: slideHeight, height: slideHeight, text: '@Html.Raw(ViewBag.QRCodeLink)' });
+
+                    $('.slideshow').height(slideHeight);
+                    $('.slideshow .slideshow-slide').each(function (index) {
+                        $(this).attr('data-slide-index', index);
+                    });
+                    $('.slideshow .slideshow-slide[data-slide-index="0"]').show();
+
+                    var currentSlide = 0;
+                    var fadeInterval = @slideshowFade;
+                    clearInterval(slidetimer);
+                    slidetimer = setInterval(function () {
+                        currentSlide++;
+
+                        if (currentSlide >= $('.slideshow .slideshow-slide').length) {
+                            $.ajax({
+                                type: 'GET',
+                                url: `${window.location.pathname}${window.location.search}&partial=true`,
+                                success: function (data) {
+                                    clearInterval(slidetimer);
+                                    clearTimeout(transitionTimer);
+                                    $('#main-gallery').html(data);
+                                    init();
+                                }
+                            });
+                        }
+
+                        $('.slideshow-slide').fadeOut(fadeInterval);
+                        clearTimeout(transitionTimer);
+                        transitionTimer = setTimeout(function () {
+                            $(`.slideshow-slide[data-slide-index="${currentSlide}"]`).fadeIn(fadeInterval);
+                        }, fadeInterval);
+                    }, @slideshowInterval);
+                }
+                init();
+
+            });
+        }, false);
+    </script>
+}
