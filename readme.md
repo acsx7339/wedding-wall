@@ -2,6 +2,28 @@
 
 <br />![Banner](banner.png)
 
+## ✨ 新增功能 (New Features)
+
+### 彈幕系統 (Danmaku / Bullet Screen)
+讓賓客參與感倍增！賓客可以在手機端發送祝福語，訊息會即時以彈幕形式飄過投影的輪播畫面。
+- **即時互動**：使用 SignalR 技術。
+- **離線支援**：內建 SignalR Library，無需外網即可在 Localhost 完美運行。
+- **自動隱藏**：投影端自動隱藏輸入框，保持畫面簡潔。
+
+## 🚀 Docker 快速開始 (Quick Start)
+
+無需繁瑣設定，使用 Docker 即可快速部署：
+
+```bash
+# 1. 建置 Image
+docker build -f WeddingShare/Dockerfile -t wedding-share .
+
+# 2. 啟動 Container (Port 5000)
+docker run -d -p 5000:8080 --name wedding-share-app wedding-share
+```
+
+瀏覽器打開 `http://localhost:5000` 即可開始使用！
+
 ## 支持 (Support)
 
 感謝所有支持這個專案的人。如果你還沒有支持，如果你能透過下面的連結「請我喝杯咖啡」，我將感激不盡。婚禮很貴，這個專案的所有收益都將用來支付我的婚禮費用。
@@ -31,7 +53,7 @@ WeddingShare 是一個只有單一目標的基礎網站。它提供你和你的�
 
 ## 連結 (Links)
 - 文件 - https://docs.wedding-share.org
-- GitHub - https://github.com/Cirx08/WeddingShare
+- GitHub - https://github.com/acsx7339/wedding-wall
 - DockerHub - https://hub.docker.com/r/cirx08/wedding_share
 - BuyMeACoffee - https://buymeacoffee.com/cirx08
 - GitHub Sponsors - https://github.com/sponsors/Cirx08
