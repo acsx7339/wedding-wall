@@ -1,0 +1,37 @@
+# Cloudflare Tunnel 配置範本
+# 
+# 設定步驟：
+# 1. 執行: cloudflared tunnel login
+# 2. 執行: cloudflared tunnel create wedding-share
+# 3. 複製生成的 <TUNNEL_ID>.json 到此目錄
+# 4. 將下方的 <YOUR_TUNNEL_ID> 替換為實際的 Tunnel ID
+# 5. 將 wedding.yourdomain.com 替換為你的網域
+
+tunnel: <YOUR_TUNNEL_ID>
+credentials-file: /etc/cloudflared/<YOUR_TUNNEL_ID>.json
+
+# 入口規則
+ingress:
+  # 主服務 - WeddingShare
+  - hostname: wedding.yourdomain.com
+    service: http://wedding-share:8080
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      http2Origin: false
+      # 針對大檔案上傳優化
+      keepAliveTimeout: 90s
+      keepAliveConnections: 100
+  
+  # Catch-all 規則（必須保留）
+  - service: http_status:404
+
+# 日誌設定
+loglevel: info
+
+# 重試與連線設定
+retries: 5
+grace-period: 30s
+
+# 針對 100 位用戶的連線優化
+no-autoupdate: false

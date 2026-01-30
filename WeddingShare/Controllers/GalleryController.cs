@@ -394,6 +394,40 @@ namespace WeddingShare.Controllers
                                             System.IO.File.Copy(Path.Combine(ImagesDirectory, $"DemoImage.png"), filePath, true);
                                         }
 
+                                        // HEIC 自動轉換為 JPEG
+                                        if (extension.Equals(".heic", StringComparison.OrdinalIgnoreCase) || 
+                                            extension.Equals(".heif", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            try
+                                            {
+                                                var jpegPath = await _imageHelper.ConvertHeicToJpeg(filePath, quality: 90);
+                                                if (!string.IsNullOrWhiteSpace(jpegPath))
+                                                {
+                                                    // 刪除原始 HEIC 檔案
+                                                    _fileHelper.DeleteFileIfExists(filePath);
+                                                    
+                                                    // 更新檔案路徑和名稱為 JPEG
+                                                    filePath = jpegPath;
+                                                    fileName = Path.GetFileName(jpegPath);
+                                                    
+                                                    _logger.LogInformation($"Converted HEIC to JPEG: {file.FileName} -> {fileName}");
+                                                }
+                                                else
+                                                {
+                                                    errors.Add($"{_localizer["File_Upload_Failed"].Value}. HEIC conversion failed.");
+                                                    _fileHelper.DeleteFileIfExists(filePath);
+                                                    continue;
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                _logger.LogError(ex, $"Failed to convert HEIC file: {file.FileName}");
+                                                errors.Add($"{_localizer["File_Upload_Failed"].Value}. HEIC conversion error.");
+                                                _fileHelper.DeleteFileIfExists(filePath);
+                                                continue;
+                                            }
+                                        }
+
                                         var checksum = await _fileHelper.GetChecksum(filePath);
                                         if (await _settings.GetOrDefault(Settings.Gallery.PreventDuplicates, true, gallery.Id) && (string.IsNullOrWhiteSpace(checksum) || await _database.GetGalleryItemByChecksum(gallery.Id, checksum) != null))
                                         {
@@ -409,6 +443,7 @@ namespace WeddingShare.Controllers
 
                                             var savePath = Path.Combine(gallerySavePath, $"{Path.GetFileNameWithoutExtension(filePath)}.webp");
                                             await _imageHelper.GenerateThumbnail(filePath, savePath, await _settings.GetOrDefault(Settings.Basic.ThumbnailSize, 720));
+
                                             
                                             var item = await _database.AddGalleryItem(new GalleryItemModel()
                                             {

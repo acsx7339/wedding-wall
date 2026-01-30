@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Localization;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 using WeddingShare.Enums;
 using Xabe.FFmpeg;
@@ -15,6 +16,7 @@ namespace WeddingShare.Helpers
         ImageOrientation GetOrientation(Image img);
         MediaType GetMediaType(string filePath);
         Task<bool> DownloadFFMPEG(string path);
+        Task<string?> ConvertHeicToJpeg(string heicPath, int quality = 90);
     }
 
     public class ImageHelper : IImageHelper
@@ -187,6 +189,38 @@ namespace WeddingShare.Helpers
             }
 
             return false;
+        }
+
+        public async Task<string?> ConvertHeicToJpeg(string heicPath, int quality = 90)
+        {
+            if (!_fileHelper.FileExists(heicPath))
+            {
+                _logger.LogWarning($"HEIC file not found: '{heicPath}'");
+                return null;
+            }
+
+            try
+            {
+                var jpegPath = Path.ChangeExtension(heicPath, ".jpg");
+                
+                using (var image = await Image.LoadAsync(heicPath))
+                {
+                    var encoder = new JpegEncoder 
+                    { 
+                        Quality = quality 
+                    };
+                    
+                    await image.SaveAsJpegAsync(jpegPath, encoder);
+                }
+
+                _logger.LogInformation($"Successfully converted HEIC to JPEG: '{heicPath}' -> '{jpegPath}'");
+                return jpegPath;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to convert HEIC file: '{heicPath}'");
+                return null;
+            }
         }
     }
 }

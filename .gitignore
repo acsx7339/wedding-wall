@@ -27,3 +27,28 @@
 /WeddingShare/wwwroot/images/custom_resources
 /WeddingShare/config/wedding-share.db.bak
 /WeddingShare/config/key-*.xml
+
+################################################################################
+# Docker 和部署
+################################################################################
+
+# 環境變數
+.env
+.env.local
+.env.*.local
+
+# Docker Compose Override
+docker-compose.override.yml
+
+# Cloudflare Tunnel
+cloudflared/*.json
+cloudflared/cert.pem
+
+# 運行時資料
+data/
+uploads/
+config/
+
+# 日誌
+*.log
+logs/

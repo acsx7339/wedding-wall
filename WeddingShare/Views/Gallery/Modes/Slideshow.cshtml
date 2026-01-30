@@ -42,13 +42,40 @@
         .danmaku-item {
             position: absolute;
             white-space: nowrap;
-            color: white;
-            font-size: 32px;
+            font-size: 36px;
             font-weight: bold;
-            text-shadow: 2px 2px 0 black, -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black;
-            opacity: 0.9;
-            animation: danmaku-move 10s linear forwards;
+            opacity: 0.95;
+            animation: danmaku-move linear forwards;
             left: 100%;
+            pointer-events: none;
+            text-shadow: 
+                3px 3px 0 rgba(0, 0, 0, 0.9),
+                -2px -2px 0 rgba(0, 0, 0, 0.9),
+                2px -2px 0 rgba(0, 0, 0, 0.9),
+                -2px 2px 0 rgba(0, 0, 0, 0.9),
+                0 0 8px rgba(0, 0, 0, 0.7),
+                0 0 16px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 多彩顏色樣式 */
+        .danmaku-gold {
+            color: #FFD700;
+        }
+        
+        .danmaku-pink {
+            color: #FF69B4;
+        }
+        
+        .danmaku-cyan {
+            color: #00FFFF;
+        }
+        
+        .danmaku-white {
+            color: #FFFFFF;
+        }
+        
+        .danmaku-lime {
+            color: #00FF00;
         }
 
         @keyframes danmaku-move {
@@ -68,6 +95,31 @@
 
                 // Danmaku Logic
                 if (!window.danmakuConnection) {
+                    // 彈幕軌道管理
+                    const LANE_COUNT = 8;
+                    const LANE_HEIGHT = 100 / LANE_COUNT;
+                    const laneLastUsed = new Array(LANE_COUNT).fill(0);
+                    
+                    // 彈幕顏色樣式
+                    const danmakuColors = ['danmaku-gold', 'danmaku-pink', 'danmaku-cyan', 'danmaku-white', 'danmaku-lime'];
+                    
+                    function getAvailableLane() {
+                        const now = Date.now();
+                        let bestLane = 0;
+                        let longestIdle = 0;
+                        
+                        for (let i = 0; i < LANE_COUNT; i++) {
+                            const idleTime = now - laneLastUsed[i];
+                            if (idleTime > longestIdle) {
+                                longestIdle = idleTime;
+                                bestLane = i;
+                            }
+                        }
+                        
+                        laneLastUsed[bestLane] = now;
+                        return bestLane;
+                    }
+
                     window.danmakuConnection = new signalR.HubConnectionBuilder()
                         .withUrl("/danmakuHub")
                         .withAutomaticReconnect()
@@ -77,19 +129,22 @@
                         var container = $('#danmaku-container');
                         if (container.length === 0) return;
 
-                        var item = $('<div class="danmaku-item"></div>').text(message);
+                        // 隨機選擇顏色
+                        var colorClass = danmakuColors[Math.floor(Math.random() * danmakuColors.length)];
+                        var item = $('<div class="danmaku-item ' + colorClass + '"></div>').text(message);
                         
-                        // Randomize top position (10% to 80% to avoid covering too much)
-                        var topPercent = Math.floor(Math.random() * 70) + 10; 
+                        // 使用軌道系統防止重疊
+                        var lane = getAvailableLane();
+                        var topPercent = lane * LANE_HEIGHT + (LANE_HEIGHT / 2) - 2;
                         item.css('top', topPercent + '%');
                         
-                        // Randomize speed slightly
-                        var duration = 8 + Math.random() * 5; 
+                        // 隨機速度 (6-12秒)
+                        var duration = 6 + Math.random() * 6; 
                         item.css('animation-duration', duration + 's');
 
                         container.append(item);
 
-                        // Remove after animation
+                        // 動畫結束後移除
                         setTimeout(function() {
                             item.remove();
                         }, duration * 1000 + 500);

@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # WeddingShare 主服務
+  wedding-share:
+    build:
+      context: .
+      dockerfile: WeddingShare/Dockerfile
+    container_name: wedding-share-app
+    ports:
+      - "5000:8080"
+    volumes:
+      # 持久化上傳的照片和影片
+      - ./data/uploads:/app/wwwroot/uploads
+      # 持久化設定檔和資料庫
+      - ./data/config:/app/config
+      # 持久化縮圖
+      - ./data/thumbnails:/app/wwwroot/thumbnails
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - TZ=Asia/Taipei
+      # 基本設定
+      - Settings__Title=婚禮照片牆
+      - Settings__Base_Url=${BASE_URL:-}
+      # 相簿設定（針對100位賓客優化）
+      - Settings__Gallery__RequireReview=true
+      - Settings__Gallery__MaxFileSizeMB=10
+      - Settings__Gallery__MaxSizeMB=10240
+      - Settings__Gallery__PreventDuplicates=true
+      - Settings__Gallery__IdleRefreshMins=3
+      # 管理員帳號
+      - Settings__Account__Owner__Username=${ADMIN_USERNAME:-admin}
+      - Settings__Account__Owner__Password=${ADMIN_PASSWORD:-admin}
+      # 加密設定
+      - Security__Encryption__Key=${ENCRYPTION_KEY:-ChangeMe}
+      - Security__Encryption__Salt=${ENCRYPTION_SALT:-ChangeMe}
+    restart: unless-stopped
+    networks:
+      - wedding-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+  
+  # Cloudflare Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: wedding-cloudflared
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflared:/etc/cloudflared:ro
+    restart: unless-stopped
+    networks:
+      - wedding-net
+    depends_on:
+      wedding-share:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    profiles:
+      # 預設啟用，若不需要可透過 docker-compose --profile disabled up 停用
+      - default
+
+networks:
+  wedding-net:
+    driver: bridge
+
+volumes:
+  wedding-data:
+    driver: local
