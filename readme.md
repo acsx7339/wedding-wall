@@ -68,45 +68,6 @@ docker run -d -p 5000:8080 --name wedding-share-app wedding-share
 
 ---
 
-## 關於 (About)
-
-WeddingShare 的初衷是提供一種簡單、私有的方式來收集婚禮照片。雖然市面上有許多類似服務，但我們希望提供一個開源、可自架且無廣告的替代方案。
-
-特別感謝所有支持這個專案的人。如果你喜歡這個專案，歡迎透過以下方式支持我們，所有收益將用於支付開發者的婚禮費用 (是真的！)。
-
-- BuyMeACoffee - https://buymeacoffee.com/cirx08
-- GitHub Sponsors - https://github.com/sponsors/Cirx08
-
-## 連結 (Links)
-- 文件 - https://docs.wedding-share.org
-- GitHub - https://github.com/acsx7339/wedding-wall
-- DockerHub - https://hub.docker.com/r/cirx08/wedding_share
-
----
-
-## 截圖 (Screenshots)
-
-### 桌面版 (Desktop)
-
-![Homepage](screenshots/Homepage.png)
-*首頁*
-
-![Gallery-Slideshow](screenshots/Gallery-Slideshow.png)
-*輪播模式 (包含 QR Code)*
-
-![Gallery-Presentation](screenshots/Gallery-Presentation.png)
-*展示模式*
-
-![Admin Area](screenshots/Admin.png)
-*後台管理*
-
-### 行動版 (Mobile)
-
-<div style="display: flex; gap: 10px;">
-  <img src="screenshots/Homepage-Mobile.png" width="30%" alt="Mobile Home" />
-  <img src="screenshots/Gallery-Mobile.png" width="30%" alt="Mobile Gallery" />
-</div>
-
 ### 深色模式 (Dark Mode)
 
 ![Gallery-Slideshow-Dark](screenshots/Gallery-Slideshow-Dark.png)
