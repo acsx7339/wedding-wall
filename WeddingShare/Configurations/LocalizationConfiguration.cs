@@ -7,7 +7,7 @@ namespace WeddingShare.Configurations
 {
     public static class LocalizationConfiguration
     {
-        public static string CurrentCulture = "en-GB";
+        public static string CurrentCulture = "zh-Hant";
 
         public static void AddLocalizationConfiguration(this IServiceCollection services, SettingsHelper settings)
         {
@@ -19,7 +19,7 @@ namespace WeddingShare.Configurations
             services.Configure<RequestLocalizationOptions>(options => {
                 var supportedCultures = new LanguageHelper().DetectSupportedCultures();
 
-                var language = settings.GetOrDefault(Settings.Languages.Default, "en-GB").Result;
+                var language = settings.GetOrDefault(Settings.Languages.Default, "zh-Hant").Result;
                 CurrentCulture = GetDefaultCulture(supportedCultures, language);
                 
                 options.DefaultRequestCulture = new RequestCulture(CurrentCulture);
@@ -44,7 +44,7 @@ namespace WeddingShare.Configurations
             {
             }
 
-            return "en-GB";
+            return "zh-Hant";
         }
 
         private static bool CultureMatches(CultureInfo culture, string key)

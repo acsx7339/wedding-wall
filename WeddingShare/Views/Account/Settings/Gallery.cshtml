@@ -437,7 +437,7 @@
             <select class="setting-field form-control" data-setting-name="@Settings.Gallery.ShowFilters">
                 @foreach (var option in ViewOptions.YesNo)
                 {
-                    if (Model.Settings.GetValue(Settings.Gallery.ShowFilters.ToUpper(), "true").Equals(option.Value, StringComparison.OrdinalIgnoreCase))
+                    if (Model.Settings.GetValue(Settings.Gallery.ShowFilters.ToUpper(), "false").Equals(option.Value, StringComparison.OrdinalIgnoreCase))
                     {
                         <option value="@option.Value" selected="selected">@option.Key</option>
                     }

@@ -41,7 +41,7 @@
         </div>
     }
 
-    if (await _settings.GetOrDefault(Settings.Gallery.ReviewCounter, true, Model?.Gallery?.Id))
+    if (await _settings.GetOrDefault(Settings.Gallery.ReviewCounter, true, Model?.Gallery?.Id) && (User?.Identity?.IsAuthenticated ?? false))
     {
         <div class="row mb-3 mb-lg-4 review-counter">
             <div class="col-4">
@@ -64,13 +64,13 @@
         {
             <partial name="~/Views/Gallery/Modes/Slideshow.cshtml" model="Model" />
         }
-        else
+        else if (User?.Identity?.IsAuthenticated ?? false)
         {
             <partial name="~/Views/Gallery/Modes/Default.cshtml" model="Model" />
         }
     </div>
 
-    @if (Model.Pagination && Model.ViewMode == ViewMode.Default)
+    @if (Model.Pagination && Model.ViewMode == ViewMode.Default && (User?.Identity?.IsAuthenticated ?? false))
     {
         <div class="row">
             <div class="col-12">

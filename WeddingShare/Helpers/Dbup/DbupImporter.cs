@@ -75,7 +75,15 @@ namespace WeddingShare.Helpers.Dbup
                         {
                             if (gallery.Identifier.Equals("default", StringComparison.OrdinalIgnoreCase))
                             {
-                                gallery.SecretKey = config.GetOrDefault(Settings.Basic.DefaultGallerySecretKey, PasswordHelper.GenerateGallerySecretKey());
+                                var envKey = config.Get(Settings.Basic.DefaultGallerySecretKey);
+                                if (!string.IsNullOrWhiteSpace(envKey))
+                                {
+                                    gallery.SecretKey = envKey;
+                                }
+                                else
+                                {
+                                    continue;
+                                }
                             }
                             else
                             {
